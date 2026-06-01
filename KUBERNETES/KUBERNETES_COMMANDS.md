@@ -1,6 +1,6 @@
 # Kubernetes Command Reference
 
-This document provides a handy reference for common Kubernetes commands, along with tips to simplify your workflow using aliases. Keeping these commands in a README makes them easily accessible and readable on GitHub.
+This document provides a handy reference for common Kubernetes commands, along with tips to simplify your workflow using aliases.
 
 ---
 
@@ -70,5 +70,3 @@ Instead of typing long `kubectl` commands with namespaces every time, you can se
 - For frequent commands, consider creating more aliases or shell functions.
 
 ---
-
-**Feel free to add more commands as you discover new use cases!**
