@@ -373,6 +373,126 @@ Even if they are not the direct cause, they can contribute to connection instabi
 
 ---
 
+# Additional Resolution: Configure VirtualService Timeouts
+
+In Kubernetes environments using Istio, another mitigation that has been observed to reduce or eliminate intermittent `503 UC` errors is configuring an explicit timeout in the VirtualService for the affected service.
+
+## Why This Can Help
+
+By default, request handling may rely on inherited Envoy/Istio timeout behavior.
+
+In some scenarios:
+
+```text
+Client
+   │
+   ▼
+Envoy Sidecar
+   │
+   ▼
+Upstream Service
+```
+
+a request may remain in-flight longer than expected due to:
+
+* Network latency
+* Connection reuse behavior
+* Backend processing delays
+* Transient connection issues
+
+When timeout behavior is not explicitly defined, Envoy may terminate or reset upstream requests in a way that surfaces as:
+
+```text
+503 UC
+upstream_reset_before_response_started{connection_termination}
+```
+
+Defining a service-specific timeout provides more predictable request lifecycle management.
+
+---
+
+## Example VirtualService Configuration
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: my-service
+spec:
+  hosts:
+    - my-service
+  http:
+    - timeout: 60s
+      route:
+        - destination:
+            host: my-service
+```
+
+Example:
+
+```text
+Request Timeout = 60 seconds
+```
+
+This instructs Envoy to allow requests to remain active for up to 60 seconds before timing out.
+
+---
+
+## How to Choose a Timeout
+
+The timeout should be based on the application's expected response times.
+
+Example:
+
+| Service Type            | Suggested Timeout |
+| ----------------------- | ----------------- |
+| Low latency APIs        | 5s - 15s          |
+| Standard business APIs  | 15s - 60s         |
+| Long-running operations | 60s+              |
+
+Avoid setting extremely large values unless required.
+
+---
+
+## Verification
+
+After applying the VirtualService timeout:
+
+Monitor:
+
+```text
+503 UC
+upstream_reset_before_response_started{connection_termination}
+```
+
+along with:
+
+* Request latency
+* Upstream response times
+* Retry counts
+* Envoy access logs
+* Application logs
+
+If error frequency decreases significantly after introducing the timeout, the issue may be related to request lifecycle management within the service mesh.
+
+---
+
+## Important Note
+
+A VirtualService timeout should be considered a mitigation or configuration tuning option rather than proof of root cause.
+
+If `503 UC` errors continue to occur, additional investigation should still focus on:
+
+* Node.js keep-alive settings
+* Envoy connection pools
+* DestinationRule configuration
+* Pod termination handling
+* Connection idle timeout mismatches
+* Network infrastructure timeouts
+
+Timeout configuration is most effective when used together with proper connection lifecycle alignment between Envoy and the upstream application.
+
+
 # Conclusion
 
 The observed `503 UC` errors indicate that Envoy is losing the upstream connection before receiving a response.
