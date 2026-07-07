@@ -496,6 +496,69 @@ Redis automatically redirects requests to the correct node.
 
 ---
 
+# Using the Cluster in Your Application
+
+If your application supports Redis Cluster, you can configure it using the following environment variable:
+
+```bash
+export REDIS_CLUSTER_NODES='[
+  {"host":"127.0.0.1","port":7000},
+  {"host":"127.0.0.1","port":7001},
+  {"host":"127.0.0.1","port":7002},
+  {"host":"127.0.0.1","port":7003},
+  {"host":"127.0.0.1","port":7004},
+  {"host":"127.0.0.1","port":7005}
+]'
+```
+
+### What does this variable do?
+
+The `REDIS_CLUSTER_NODES` environment variable provides your application with a list of Redis Cluster nodes. A Redis Cluster client only needs one or more reachable nodes to discover the entire cluster topology. Including all nodes improves resilience if one or more nodes are temporarily unavailable.
+
+Each entry contains:
+
+- `host` – The hostname or IP address of the Redis node.
+- `port` – The port on which that Redis node is listening.
+
+Example:
+
+| Host | Port | Role |
+|------|------|------|
+|127.0.0.1|7000|Master|
+|127.0.0.1|7001|Master|
+|127.0.0.1|7002|Master|
+|127.0.0.1|7003|Replica|
+|127.0.0.1|7004|Replica|
+|127.0.0.1|7005|Replica|
+
+> **Note:** Your Redis client will automatically discover the cluster topology and route requests to the correct node. You do not need to manually select which node stores a particular key.
+
+### Example
+
+After starting the cluster using the provided batch script, set the environment variable before starting your application:
+
+**Linux/macOS**
+
+```bash
+export REDIS_CLUSTER_NODES='[
+  {"host":"127.0.0.1","port":7000},
+  {"host":"127.0.0.1","port":7001},
+  {"host":"127.0.0.1","port":7002},
+  {"host":"127.0.0.1","port":7003},
+  {"host":"127.0.0.1","port":7004},
+  {"host":"127.0.0.1","port":7005}
+]'
+```
+
+**Windows Command Prompt**
+
+```cmd
+set REDIS_CLUSTER_NODES=[{"host":"127.0.0.1","port":7000},{"host":"127.0.0.1","port":7001},{"host":"127.0.0.1","port":7002},{"host":"127.0.0.1","port":7003},{"host":"127.0.0.1","port":7004},{"host":"127.0.0.1","port":7005}]
+```
+
+Once this variable is configured, start your application. The Redis Cluster client will connect to one of the configured nodes, discover the remaining nodes automatically, and communicate with the cluster without any additional configuration.
+
+
 # 12. Basic Redis Commands
 
 Store a value:
